@@ -1,13 +1,8 @@
-name: Apply Preview Environment
+name: Apply Sandbox Environment
 on:
   push:
     branches:
-      - preview
-    paths:
-      - components/**
-      - environments/preview/**
-      - terragrunt.hcl
-      - .github/**
+      - main
 jobs:
   include:
     uses: ./.github/workflows/apply-workflow.yaml

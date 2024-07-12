@@ -9,9 +9,6 @@ include {
 
 inputs = {
   repository = "miguellobato84/aws-resources"
-  plan = {
-    enabled = true
-  }
   apply = {
     enabled = true
     branch  = "main"

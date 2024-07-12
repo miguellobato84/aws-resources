@@ -3,17 +3,6 @@ variable "repository" {
   description = "Github repository name"
 }
 
-variable "plan" {
-  type = object({
-    enabled             = bool
-    role_name           = optional(string)
-    additional_policies = optional(list(any), [])
-  })
-  default = {
-    enabled = false
-  }
-}
-
 variable "apply" {
   type = object({
     enabled   = bool
