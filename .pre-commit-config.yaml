@@ -1,0 +1,28 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.92.0
+    hooks:
+      - id: terraform_fmt
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.12.1
+    hooks:
+      - id: yamlfmt
+        exclude: ^modules/eks/helm/charts/karpenter-resources/templates/
+  - repo: https://github.com/terraform-docs/terraform-docs
+    rev: v0.18.0
+    hooks:
+      - id: terraform-docs-go
+        name: Terraform module docs
+        args: [markdown, --recursive, --recursive-path, ., --show, 'inputs,modules,outputs', --output-file, README.md, modules]
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.23
+    hooks:
+      - id: terragrunt-hclfmt

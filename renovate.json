@@ -1,0 +1,22 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": [
+        "config:recommended"
+    ],
+    "separateMajorMinor": true,
+    "packageRules": [
+        {
+            "matchUpdateTypes": [
+                "patch"
+            ],
+            "enabled": false
+        },
+        {
+            "matchUpdateTypes": [
+                "minor",
+                "major"
+            ],
+            "groupName": "major-minor-updates"
+        }
+    ]
+}

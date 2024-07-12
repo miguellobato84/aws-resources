@@ -1,0 +1,96 @@
+name: Generic Apply Workflow
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      aws_region:
+        required: true
+        type: string
+      iam_role:
+        required: true
+        type: string
+permissions:
+  contents: read
+  security-events: write
+  id-token: write
+  actions: write
+  pull-requests: write
+  packages: read
+jobs:
+  get-metadata:
+    name: Get Metadata
+    runs-on: ubuntu-latest
+    outputs:
+      build_datetime: ${{ steps.metadata.outputs.build_datetime }}
+      build_timestamp: ${{ steps.metadata.outputs.build_timestamp }}
+      build_epoch: ${{ steps.metadata.outputs.build_epoch }}
+      terraform_version: ${{ steps.metadata.outputs.terraform_version }}
+      terragrunt_version: ${{ steps.metadata.outputs.terragrunt_version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: metadata
+        name: Get Metadata
+        uses: ./.github/actions/get-metadata
+      - name: Log
+        shell: bash
+        run: |
+          echo "Epoch: ${{ steps.metadata.outputs.build_epoch }}"
+          echo "Terraform version: ${{ steps.metadata.outputs.terraform_version }}"
+          echo "Terragrunt version: ${{ steps.metadata.outputs.terragrunt_version }}"
+  terragrunt-apply:
+    needs: [get-metadata]
+    name: Terragrunt Apply
+    runs-on: ubuntu-latest
+    outputs:
+      apply-result: ${{ steps.apply.outputs.apply-result }}
+      exit-code: ${{ steps.apply.outputs.exit-code }}
+      outcome: ${{ steps.apply.outcome }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.iam_role }}
+          aws-region: ${{ inputs.aws_region }}
+      - name: Set AWS Profile
+        shell: bash
+        run: |
+          aws configure set aws_access_key_id ${{ env.AWS_ACCESS_KEY_ID }} --profile profile-${{ inputs.environment }}
+          aws configure set aws_secret_access_key ${{ env.AWS_SECRET_ACCESS_KEY }} --profile profile-${{ inputs.environment }}
+          aws configure set aws_session_token ${{ env.AWS_SESSION_TOKEN }} --profile profile-${{ inputs.environment }}
+      - name: Setup
+        shell: bash
+        run: |
+          echo "Setting up Terraform and Terragrunt"
+          echo "Terraform version: ${{ needs.get-metadata.outputs.terraform_version }}"
+          echo "Terragrunt version: ${{ needs.get-metadata.outputs.terragrunt_version }}"
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3.1.0
+        with:
+          terraform_version: ${{ needs.get-metadata.outputs.terraform_version }}
+          terraform_wrapper: false
+      - name: Setup Terragrunt
+        uses: autero1/action-terragrunt@v3.0.2
+        with:
+          terragrunt-version: ${{ needs.get-metadata.outputs.terragrunt_version }}
+      - name: Terragrunt Apply
+        id: apply
+        run: |
+          set +e
+
+          echo "apply-result<<EOF" >> $GITHUB_OUTPUT
+          terragrunt run-all apply --terragrunt-working-dir environments/${{ inputs.environment }}/${{ inputs.aws_region }} -no-color --terragrunt-non-interactive 2>&1 | tee -a apply-output.txt
+          exit_code="${PIPESTATUS[0]}"
+          tail -c 60000 apply-output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "exit-code=$exit_code" >> $GITHUB_OUTPUT
+        env:
+          TF_IN_AUTOMATION: 1
+          TF_CLI_ARGS: -no-color
+      - name: Exit
+        run: |
+          exit ${{ steps.apply.outputs.exit-code }}

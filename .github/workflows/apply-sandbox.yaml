@@ -1,0 +1,17 @@
+name: Apply Preview Environment
+on:
+  push:
+    branches:
+      - preview
+    paths:
+      - components/**
+      - environments/preview/**
+      - terragrunt.hcl
+      - .github/**
+jobs:
+  include:
+    uses: ./.github/workflows/apply-workflow.yaml
+    with:
+      aws_region: eu-west-1
+      environment: sandbox
+      iam_role: arn:aws:iam::339713154821:role/aws-resources-apply

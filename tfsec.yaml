@@ -1,0 +1,7 @@
+severity_overrides:
+  aws-iam-no-policy-wildcards: MEDIUM
+  aws-ec2-no-public-egress-sgr: MEDIUM
+  aws-ec2-no-public-ingress-sgr: MEDIUM
+  aws-elb-http-not-used: MEDIUM
+  aws-s3-encryption-customer-key: MEDIUM
+  aws-dynamodb-enable-at-rest-encryption: MEDIUM
